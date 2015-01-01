@@ -26,52 +26,6 @@ def one(x,y):
     else:
         return np.ones_like(x)
 
-
-class FlowField(object):
-
-    def __init__(self, xwin, ywin, res):
-        self.set_win(xwin, ywin, res)
-        self.reset()
-
-    def set_win(self, xwin, ywin, res):
-        self.xmin = xwin[0]
-        self.xmax = xwin[1]
-        self.ymin = ywin[0]
-        self.ymax = ywin[1]
-        try:
-            self.xres = res[0]
-            self.yres = res[1]
-        except TypeError:
-            self.xres = res
-            self.yres = res
-
-    def reset(self):
-        self.X, self.Y = np.mgrid[self.xmin:self.xmax:self.xres,
-                                  self.ymin:self.ymax:self.yres]
-
-        self.U = np.zeros_like(self.X)
-        self.V = np.zeros_like(self.X)
-        self.PHI = np.zeros_like(self.X)
-        self.PSI = np.zeros_like(self.X)
-
-        self.flow_objects = []
-
-    def add_object(self,f):
-        self.flow_objects.append(f)
-        self.U += f.u(self.X, self.Y)
-        self.V += f.v(self.X, self.Y)
-        self.PHI += f.phi(self.X, self.Y)
-        self.PSI += f.psi(self.X, self.Y)
-
-    def add_point(self, x0, y0, Q):
-        self.add_object(FlowPoint(x0, y0, Q))
-
-    def add_doublet_x(self, x0, y0, Q):
-        self.add_object(FlowDoubletX(x0,y0,Q))
-
-    def add_uniform(self, angle, vel):
-        self.add_object(FlowUniform(angle, vel))
-
 class FlowObject(object):
     def __init__(self, x0, y0, Q):
         self.x0 = x0
@@ -153,6 +107,52 @@ class FlowUniform(FlowObject):
     def psi(self,x,y):
         return one(x,y) * self.vel * (-x*np.sin(self.angle) + y*np.cos(self.angle))
 
+class FlowField(object):
+
+    def __init__(self, xwin, ywin, res):
+        self.set_win(xwin, ywin, res)
+        self.reset()
+
+    def set_win(self, xwin, ywin, res):
+        self.xmin = xwin[0]
+        self.xmax = xwin[1]
+        self.ymin = ywin[0]
+        self.ymax = ywin[1]
+        try:
+            self.xres = res[0]
+            self.yres = res[1]
+        except TypeError:
+            self.xres = res
+            self.yres = res
+
+    def reset(self):
+        self.X, self.Y = np.mgrid[self.xmin:self.xmax:self.xres,
+                                  self.ymin:self.ymax:self.yres]
+
+        self.U = np.zeros_like(self.X)
+        self.V = np.zeros_like(self.X)
+        self.PHI = np.zeros_like(self.X)
+        self.PSI = np.zeros_like(self.X)
+
+        self.flow_objects = []
+
+    def add_object(self,f):
+        self.flow_objects.append(f)
+        self.U += f.u(self.X, self.Y)
+        self.V += f.v(self.X, self.Y)
+        self.PHI += f.phi(self.X, self.Y)
+        self.PSI += f.psi(self.X, self.Y)
+
+    def add_point(self, x0, y0, Q):
+        self.add_object(FlowPoint(x0, y0, Q))
+
+    def add_doublet_x(self, x0, y0, Q):
+        self.add_object(FlowDoubletX(x0,y0,Q))
+
+    def add_uniform(self, angle, vel):
+        self.add_object(FlowUniform(angle, vel))
+
+
 if __name__ == "__main__":
     # import matplotlib
     # matplotlib.use('Qt4Agg')
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     # pipeflow.add_point(X0,3*R,-Q)
     #
     pipeflow.add_doublet_x(0,R,Q)
-
+    pipeflow.add_doublet_x(0,-R,Q)
 
     pipeflow.add_uniform(0, 10)
 
